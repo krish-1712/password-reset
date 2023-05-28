@@ -45,37 +45,32 @@ const validate= async(req,res,next)=>{
     }
 }
 
-const forgot=async(user,_id)=>{
-    let token = jwt.sign({id:user._id},process.env.secretkey, {
-        expiresIn: "10m",
-      
-      });
-      return token
-}
 
-const authenticate = (req, res, next) => {
-    if (req.body.token) {
-      try {
+
+// const authenticate = (req, res, next) => {
+//   console.log(req.body.token)
+//     if (req.body.token) {
+//       try {
    
-        let decode = jwt.verify(req.body.token, process.env.secretkey)
-        if (decode) {
-          next();
-        }
+//         // let decode = jwt.verify(req.body.token, process.env.secretkey)
+//         // if (decode) {
+//         //   next();
+//         // }
   
-      } catch (error) {
-        res.status(401).send({
-          message: "Your Token is Expired",
-          error,
-        })
-      }
+//       } catch (error) {
+//         res.status(401).send({
+//           message: "Your Token is Expired",
+//           error,
+//         })
+//       }
   
-    } else {
-      res.status(401).send({
-        message: "Unauthorized",
-      })
-    }
+//     } else {
+//       res.status(401).send({
+//         message: "Unauthorized",
+//       })
+//     }
   
-  }
+//   }
   
 
 
@@ -105,4 +100,4 @@ const authenticate = (req, res, next) => {
 
 
 
-module.exports={hashPassword,hashCompare,createToken,validate,forgot,authenticate}
+module.exports={hashPassword,hashCompare,createToken,validate}

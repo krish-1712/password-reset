@@ -3,20 +3,16 @@ var router = express.Router();
 const { userModel } = require('../schemas/userSchema')
 const mongoose = require('mongoose')
 const { dbUrl } = require('../common/dbConfig')
-const { hashPassword, hashCompare, createToken, validate,forgot,authenticate} = require('../common/auth')
+const { hashPassword, hashCompare, createToken, validate } = require('../common/auth')
 const nodemailer = require('nodemailer')
-const bodyParser = require('body-parser')
-const cors = require("cors");
-
-router.use(bodyParser.urlencoded({ extended: false }))
-
-// parse application/json
-router.use(bodyParser.json())
+const jwt = require('jsonwebtoken')
+const bcrypt = require('bcryptjs')
 
 
-router.use(cors({
-    origin:process.env.BASE_URL
-  }))
+
+
+
+
 
 
 
@@ -69,6 +65,7 @@ router.post('/signup', async (req, res) => {
       let user = await userModel.create(req.body)
       res.status(200).send({
         message: "User Signup Successfully!",
+        user,
       })
     }
     else {
@@ -88,6 +85,7 @@ router.post('/signup', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     let user = await userModel.findOne({ email: req.body.email })
+    console.log(user)
     if (user) {
 
       // verify the password
@@ -160,7 +158,8 @@ router.delete('/:id', async (req, res) => {
     if (user) {
       let user = await userModel.deleteOne({ _id: req.params.id })
       res.status(200).send({
-        message: "User Deleted Successfull!"
+        message: "User Deleted Successfull!",
+        user
       })
     }
     else {
@@ -180,61 +179,42 @@ router.delete('/:id', async (req, res) => {
 
 
 
-router.post("/reset-sendmail",forgot, async (req, res) => {
+router.post("/reset", async (req, res) => {
   try {
     let user = await userModel.findOne({ email: req.body.email })
-    if (user) {
-  
-      let url = `${process.env.BASE_URL}/password/${user._id}/${token}`;
-
-      let transporter = nodemailer.createTransport({
-        service: "gmail",
-        host: "smtp.gmail.com",
-        port: 993,
-        secure: false,
-        auth: {
-          user: process.env.EMAILUSE, 
-          pass: process.env.EMAILPASS, 
-        },
-      });
-      let details = {
-        from: "foo@gmail.com", 
-        to: user.email, 
-        subject: "Hello ✔", 
-        text: `Reset link`, 
-        html: `<div><span>Password Reset Link : - </span> <a href=${url}> Click
-        here !!!</a>
-
-    <div>
-        <h4>
-            Note :-
-            <ul>
-                <li>This link only valid in 10 minitues</li>
-            </ul>
-        </h4>
-    </div>
-</div>`,
-      };
-
-      await transporter.sendMail(details, (err) => {
-        if (err) {
-          res.status(200).send({
-            message: "It has Some Error for Send a Mail",
-          });
-        } else {
-          res.status(200).send({
-            message: "Password Reset Link Send in your Mail",
-          });
-        }
-      });
-    } else {
-      res.status(401).send({
-        message: "Please Enter vaild Email Address",
-      });
+    if (!user) {
+      return res.status(404).send({ message: 'User not found' });
     }
 
-  
-    await mongoose.close(dbUrl);
+    const token = jwt.sign({ userId: user._id }, process.env.secretkey, { expiresIn: '1h' });
+
+    let transporter = nodemailer.createTransport({
+      service: "gmail",
+      host: "smtp.example.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD
+
+      },
+    });
+    let details = {
+      from: "krishkannan1712@gmail.com",
+      to: "krishkannan1712@gmail.com",
+      subject: "Hello ✔",
+      html: `
+        <p>Hello,</p>
+        <p>Please click on the following link to reset your password:</p>
+        <a href="${process.env.CLIENT_URL}/users/reset/${token}">Reset Password</a>
+        <p>If you didn't request this, please ignore this email.</p>
+      `
+    };
+    await transporter.sendMail(details)
+    res.status(200).send({ message: 'Password reset email sent' })
+    console.log(details)
+
+
   } catch (error) {
     res.status(500).send({
       message: "Internal Server Error",
@@ -243,23 +223,30 @@ router.post("/reset-sendmail",forgot, async (req, res) => {
   }
 });
 
- 
-router.post('/password-reset',authenticate,async(req,res)=>{
-  try{
-    let users =await userModel.find();
-    req.body.password = hashPassword
-    users.updateOne({_id:(req.body.id)},{$set:{ password: req.body.password }})
 
-    res.status(200).send({
-      message:"Password Reset successfully",
-    })
+router.post('/password-reset', async (req, res) => {
+    try {
+      const users = await userModel.findOne({email:req.body.email});
+      console.log( req.body.password );
+      let hashedPassword = await hashPassword(req.body.password)
+      console.log(hashedPassword);
+    const filter = { email: req.body.email};
+const update = { password: hashedPassword};
 
-  }catch(error){
-    res.status(400).send({
-      message:"Some Error Occured",
-    })
+// `doc` is the document _after_ `update` was applied because of
+// `new: true`
+const doc = await userModel.findOneAndUpdate(filter, update);
+console.log(doc);
 
-  }
-})
+      res.status(200).send({
+        message: "Password Reset successfully",
+      })
+
+    } catch (error) {
+      res.status(400).send({
+        message: "Some Error Occured",
+      })
+    }
+  })
 
 module.exports = router;
