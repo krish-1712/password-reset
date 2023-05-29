@@ -200,8 +200,8 @@ router.post("/reset", async (req, res) => {
       },
     });
     let details = {
-      from: "krishkannan1712@gmail.com",
-      to: "krishkannan1712@gmail.com",
+      from: "greenpalace1712@gmail.com",
+      to: "greenpalace1712@gmail.com",
       subject: "Hello ✔",
       html: `
         <p>Hello,</p>
