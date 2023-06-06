@@ -6,15 +6,6 @@ const { dbUrl } = require('../common/dbConfig')
 const { hashPassword, hashCompare, createToken, validate } = require('../common/auth')
 const nodemailer = require('nodemailer')
 const jwt = require('jsonwebtoken')
-const bcrypt = require('bcryptjs')
-
-
-
-
-
-
-
-
 
 mongoose.connect(dbUrl)
 
@@ -84,6 +75,7 @@ router.post('/signup', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   try {
+    console.log("rtetss")
     let user = await userModel.findOne({ email: req.body.email })
     console.log(user)
     if (user) {
@@ -186,7 +178,7 @@ router.post("/reset", async (req, res) => {
       return res.status(404).send({ message: 'User not found' });
     }
 
-    const token = jwt.sign({ userId: user._id }, process.env.secretkey, { expiresIn: '1h' });
+    const token = jwt.sign({ userId: user.email }, process.env.secretkey, { expiresIn: '1h' });
 
     let transporter = nodemailer.createTransport({
       service: "gmail",
@@ -199,14 +191,17 @@ router.post("/reset", async (req, res) => {
 
       },
     });
+    const queryParams = new URLSearchParams();
+    queryParams.set('token', token);
+    const queryString = queryParams.toString();
     let details = {
       from: "greenpalace1712@gmail.com",
-      to: "greenpalace1712@gmail.com",
+      to: "krishkannan1712@gmail.com",
       subject: "Hello ✔",
       html: `
         <p>Hello,</p>
         <p>Please click on the following link to reset your password:</p>
-        <a href="${process.env.CLIENT_URL}/users/reset/${token}">Reset Password</a>
+        <a href="${process.env.CLIENT_URL}/password?${queryString}">Reset Password</a>
         <p>If you didn't request this, please ignore this email.</p>
       `
     };
@@ -224,29 +219,40 @@ router.post("/reset", async (req, res) => {
 });
 
 
-router.post('/password-reset', async (req, res) => {
-    try {
-      const users = await userModel.findOne({email:req.body.email});
-      console.log( req.body.password );
-      let hashedPassword = await hashPassword(req.body.password)
-      console.log(hashedPassword);
-    const filter = { email: req.body.email};
-const update = { password: hashedPassword};
+router.post('/password-reset', async (req, res,next) => {
 
-// `doc` is the document _after_ `update` was applied because of
-// `new: true`
-const doc = await userModel.findOneAndUpdate(filter, update);
-console.log(doc);
 
-      res.status(200).send({
-        message: "Password Reset successfully",
-      })
+  try {
+    const users = await userModel.findOne({ email: req.body.email });
+    console.log("reset : "+req.body.password);
+    const token = req.body.token; 
+    console.log(token)
+    let hashedPassword = await hashPassword(req.body.password)
+    console.log(hashedPassword);
+    
+    let decodedToken = jwt.verify(token, process.env.secretkey)
 
-    } catch (error) {
-      res.status(400).send({
-        message: "Some Error Occured",
-      })
-    }
-  })
+    console.log("decoded : "+decodedToken)
+    const userId = decodedToken.userId;
+    console.log(userId)
+    const filter = { email: userId };
+    const update = { password: hashedPassword };
+
+    const doc = await userModel.findOneAndUpdate(filter, update);
+    console.log("test");
+    console.log(doc);
+
+
+    res.status(200).send({
+      message: "Password Reset successfully",
+    })
+
+  } catch (error) {
+    res.status(400).send({
+      message: "Some Error Occured",
+    })
+  }
+})
+
 
 module.exports = router;
