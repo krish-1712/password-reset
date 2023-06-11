@@ -75,9 +75,8 @@ router.post('/signup', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   try {
-    console.log("rtetss")
+    
     let user = await userModel.findOne({ email: req.body.email })
-    console.log(user)
     if (user) {
 
       // verify the password
@@ -173,7 +172,7 @@ router.delete('/:id', async (req, res) => {
 
 router.post("/reset", async (req, res) => {
   try {
-    let user = await userModel.findOne({ email: req.body.email })
+    let user = await userModel.findOne({ email: req.body.values.email })
     if (!user) {
       return res.status(404).send({ message: 'User not found' });
     }
@@ -224,23 +223,22 @@ router.post('/password-reset', async (req, res,next) => {
 
   try {
     const users = await userModel.findOne({ email: req.body.email });
-    console.log("reset : "+req.body.password);
+ 
     const token = req.body.token; 
-    console.log(token)
+
     let hashedPassword = await hashPassword(req.body.password)
-    console.log(hashedPassword);
+
     
     let decodedToken = jwt.verify(token, process.env.secretkey)
 
     console.log("decoded : "+decodedToken)
     const userId = decodedToken.userId;
-    console.log(userId)
+  
     const filter = { email: userId };
     const update = { password: hashedPassword };
 
     const doc = await userModel.findOneAndUpdate(filter, update);
-    console.log("test");
-    console.log(doc);
+  
 
 
     res.status(200).send({
