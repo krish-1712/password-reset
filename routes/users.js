@@ -195,7 +195,7 @@ router.post("/reset", async (req, res) => {
     const queryString = queryParams.toString();
     let details = {
       from: "greenpalace1712@gmail.com",
-      to: "krishkannan1712@gmail.com",
+      to: user.email,
       subject: "Hello ✔",
       html: `
         <p>Hello,</p>
