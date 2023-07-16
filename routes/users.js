@@ -11,6 +11,7 @@ mongoose.connect(dbUrl)
 
 /* GET users listing. */
 router.get('/dummy', validate, async function (req, res) {
+  if (req.user.isAdmin) {
   try {
     let users = await userModel.find();
     console.log(users);
@@ -25,6 +26,9 @@ router.get('/dummy', validate, async function (req, res) {
       error
     })
     console.log(error);
+  }
+ } else {
+    res.status(403).json("You are not allowed!");
   }
 
 });
@@ -51,8 +55,8 @@ router.post('/signup', async (req, res) => {
     let user = await userModel.findOne({ email: req.body.email })
     if (!user) {
 
-      let hashedPassword = await hashPassword(req.body.password)
-      req.body.password = hashedPassword
+        let hashedPassword = await hashPassword(req.body.password)
+        req.body.password = hashedPassword
       let user = await userModel.create(req.body)
       res.status(200).send({
         message: "User Signup Successfully!",
@@ -172,7 +176,7 @@ router.delete('/:id', async (req, res) => {
 
 router.post("/reset", async (req, res) => {
   try {
-    let user = await userModel.findOne({ email: req.body.values.email })
+    let user = await userModel.findOne({ email: req.body.values.email })  
     if (!user) {
       return res.status(404).send({ message: 'User not found' });
     }
