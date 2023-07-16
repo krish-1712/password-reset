@@ -7,6 +7,7 @@ const { hashPassword, hashCompare, createToken, validate } = require('../common/
 const nodemailer = require('nodemailer')
 const jwt = require('jsonwebtoken')
 
+
 mongoose.connect(dbUrl)
 
 /* GET users listing. */
