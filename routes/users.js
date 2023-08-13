@@ -5,7 +5,7 @@ const mongoose = require('mongoose')
 const { dbUrl } = require('../common/dbConfig')
 const { hashPassword, hashCompare, createToken, validate } = require('../common/auth')
 const nodemailer = require('nodemailer')
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
 
 
 mongoose.connect(dbUrl)
@@ -51,16 +51,26 @@ router.get('/:id', async (req, res) => {
 
 });
 
+
+
 router.post('/signup', async (req, res) => {
   try {
     let user = await userModel.findOne({ email: req.body.email })
-    if (!user) {
+    console.log(user)
 
-        let hashedPassword = await hashPassword(req.body.password)
-        req.body.password = hashedPassword
-      let user = await userModel.create(req.body)
+    if (!user) {
+      let hashedPassword = await hashPassword(req.body.password)
+      req.body.password = hashedPassword
+      let user = await userModel.create({
+        firstname: req.body.firstname,
+        lastname: req.body.lastname,
+        email: req.body.email,
+        password: req.body.password,
+
+      })
+      console.log(user)
       res.status(200).send({
-        message: "User Signup Successfully!",
+        message: "Users Created Successfully!",
         user,
       })
     }
@@ -77,6 +87,8 @@ router.post('/signup', async (req, res) => {
     })
   }
 })
+
+
 
 router.post('/login', async (req, res) => {
   try {

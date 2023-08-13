@@ -4,7 +4,11 @@ const mongoose = require('mongoose')
 
 let UserSchema = new mongoose.Schema(
     {
-        name: {
+        firstname: {
+            type: String,
+            required: true
+        },
+        lastname: {
             type: String,
             required: true
         },
@@ -16,23 +20,15 @@ let UserSchema = new mongoose.Schema(
                 return validator.isEmail(value)
             }
         },
-        mobile: {
-            type: String,
-            default: '000-000-0000'
-        },
         password: {
             type: String,
             required: true
-        },
-        role: {
-            type: String,
-            default: 'user'
         },
         createdAt: {
             type: Date,
             default: Date.now
         }
-    
+
     },
     {
         collection: "users",
